@@ -21,10 +21,10 @@
 package me.clip.placeholderapi.events;
 
 import me.clip.placeholderapi.PlaceholderHook;
-
 import org.bukkit.event.Event;
 import org.bukkit.event.HandlerList;
 
+@Deprecated
 public class PlaceholderHookUnloadEvent extends Event {
 
 	private static final HandlerList handlers = new HandlerList();

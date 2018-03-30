@@ -20,12 +20,7 @@
  */
 package me.clip.placeholderapi;
 
-import java.text.SimpleDateFormat;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.concurrent.Callable;
-import java.util.concurrent.TimeUnit;
-
+import me.clip.placeholderapi.commands.PlaceholderAPICommands;
 import me.clip.placeholderapi.configuration.PlaceholderAPIConfig;
 import me.clip.placeholderapi.expansion.ExpansionManager;
 import me.clip.placeholderapi.expansion.PlaceholderExpansion;
@@ -33,12 +28,16 @@ import me.clip.placeholderapi.expansion.Version;
 import me.clip.placeholderapi.expansion.cloud.ExpansionCloudManager;
 import me.clip.placeholderapi.updatechecker.UpdateChecker;
 import me.clip.placeholderapi.util.TimeUtil;
-import me.clip.placeholderapi.metrics.Metrics;
-
+import org.bstats.bukkit.Metrics;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.command.CommandSender;
 import org.bukkit.plugin.java.JavaPlugin;
+
+import java.text.SimpleDateFormat;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.concurrent.TimeUnit;
 
 
 /**
@@ -107,9 +106,8 @@ public class PlaceholderAPIPlugin extends JavaPlugin {
 	public void reloadConf(CommandSender s) {
 		boolean cloudEnabled = this.expansionCloud != null;
 		expansionManager.clean();
-		PlaceholderAPI.unregisterAllExpansions();
+		PlaceholderAPI.unregisterAllProvidedExpansions();
 		reloadConfig();
-		saveConfig();
 		setupOptions();
 		expansionManager.registerAllExpansions();
 		if (!config.isCloudEnabled()) {
@@ -121,11 +119,7 @@ public class PlaceholderAPIPlugin extends JavaPlugin {
 	}
 
 	private void setupCommands() {
-		if (serverVersion != null && serverVersion.isSpigot()) {
-			getCommand("placeholderapi").setExecutor(new me.clip.placeholderapi.commands.spigot.PlaceholderAPICommands(this));
-		} else {
-			getCommand("placeholderapi").setExecutor(new me.clip.placeholderapi.commands.bukkit.PlaceholderAPICommands(this));
-		}
+		getCommand("placeholderapi").setExecutor(new PlaceholderAPICommands(this, (serverVersion != null && serverVersion.isSpigot())));
 	}
 
 	private void setupOptions() {

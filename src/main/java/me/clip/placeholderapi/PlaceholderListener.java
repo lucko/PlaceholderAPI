@@ -20,18 +20,11 @@
  */
 package me.clip.placeholderapi;
 
-import java.util.Map;
-import java.util.Map.Entry;
-
+import me.clip.placeholderapi.events.ExpansionUnregisterEvent;
 import me.clip.placeholderapi.events.PlaceholderHookUnloadEvent;
-import me.clip.placeholderapi.expansion.Cacheable;
-import me.clip.placeholderapi.expansion.Cleanable;
-import me.clip.placeholderapi.expansion.ExpansionManager;
-import me.clip.placeholderapi.expansion.PlaceholderExpansion;
-import me.clip.placeholderapi.expansion.Taskable;
+import me.clip.placeholderapi.expansion.*;
 import me.clip.placeholderapi.expansion.cloud.CloudExpansion;
 import me.clip.placeholderapi.external.EZPlaceholderHook;
-
 import org.bukkit.Bukkit;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
@@ -41,7 +34,11 @@ import org.bukkit.event.player.PlayerQuitEvent;
 import org.bukkit.event.server.PluginDisableEvent;
 import org.bukkit.event.server.PluginEnableEvent;
 
-@SuppressWarnings("deprecation")
+import java.util.Map;
+import java.util.Map.Entry;
+import java.util.Set;
+
+
 public class PlaceholderListener implements Listener {
 	
 	private PlaceholderAPIPlugin plugin;
@@ -52,25 +49,23 @@ public class PlaceholderListener implements Listener {
 	}
 	
 	@EventHandler
-	public void onInternalUnload(PlaceholderHookUnloadEvent event) {
+	public void onExpansionUnregister(ExpansionUnregisterEvent event) {
 		
-		if (event.getHook() instanceof Listener) {
-			HandlerList.unregisterAll((Listener)event.getHook());	
-			plugin.getLogger().info("Unregistered event listener for placeholder expansion: " + event.getHookName());
+		if (event.getExpansion() instanceof Listener) {
+			HandlerList.unregisterAll((Listener)event.getExpansion());
 		}
 		
-		if (event.getHook() instanceof Taskable) {
-			plugin.getLogger().info("Cancelling scheduled task for placeholder expansion: " + event.getHookName());
-			((Taskable) event.getHook()).stop();
+		if (event.getExpansion() instanceof Taskable) {
+			((Taskable) event.getExpansion()).stop();
 		}
 		
-		if (event.getHook() instanceof Cacheable) {
-			((Cacheable) event.getHook()).clear();
+		if (event.getExpansion() instanceof Cacheable) {
+			((Cacheable) event.getExpansion()).clear();
 		}
 		
 		if (plugin.getExpansionCloud() != null) {
 			
-			CloudExpansion ex = plugin.getExpansionCloud().getCloudExpansion(event.getHookName());
+			CloudExpansion ex = plugin.getExpansionCloud().getCloudExpansion(event.getExpansion().getName());
 			
 			if (ex != null) {
 				ex.setHasExpansion(false);
@@ -132,7 +127,7 @@ public class PlaceholderListener implements Listener {
 				}
 				
 				if (ex.getPlugin().equalsIgnoreCase(n)) {
-					if (PlaceholderAPI.unregisterPlaceholderHook(hook.getKey())) {
+					if (PlaceholderAPI.unregisterExpansion(ex)) {
 						plugin.getLogger().info("Unregistered placeholder expansion: " + ex.getIdentifier());
 					}
 				}
@@ -142,16 +137,16 @@ public class PlaceholderListener implements Listener {
 	
 	@EventHandler
 	public void onQuit(PlayerQuitEvent e) {
-		
-		Map<String, PlaceholderHook> placeholders = PlaceholderAPI.getPlaceholders();
-		
-		if (placeholders.isEmpty()) {
+
+	    Set<PlaceholderExpansion> expansions = PlaceholderAPI.getExpansions();
+
+		if (expansions.isEmpty()) {
 			return;
 		}
 		
-		for (PlaceholderHook hooks : placeholders.values()) {
-			if (hooks instanceof Cleanable) {
-				((Cleanable) hooks).cleanup(e.getPlayer());
+		for (PlaceholderExpansion ex : expansions) {
+			if (ex instanceof Cleanable) {
+				((Cleanable) ex).cleanup(e.getPlayer());
 			}
 		}
 	}

@@ -18,15 +18,13 @@
  *
  *
  */
-package me.clip.placeholderapi.commands.spigot;
-
-import java.util.Set;
+package me.clip.placeholderapi.commands;
 
 import me.clip.placeholderapi.PlaceholderAPI;
 import me.clip.placeholderapi.PlaceholderAPIPlugin;
+import me.clip.placeholderapi.commands.spigot.ExpansionCloudCommands;
 import me.clip.placeholderapi.expansion.PlaceholderExpansion;
 import me.clip.placeholderapi.util.Msg;
-
 import org.apache.commons.lang.StringUtils;
 import org.bukkit.Bukkit;
 import org.bukkit.command.Command;
@@ -34,69 +32,72 @@ import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 
+import java.util.Set;
+
 public class PlaceholderAPICommands implements CommandExecutor {
 
 	private PlaceholderAPIPlugin plugin;
 	
-	private ExpansionCloudCommands eCloud;
+	private CommandExecutor eCloud;
 	
-	public PlaceholderAPICommands(PlaceholderAPIPlugin i) {
+	public PlaceholderAPICommands(PlaceholderAPIPlugin i, boolean spigot) {
 		plugin = i;
-		eCloud = new ExpansionCloudCommands(i);
+		if (spigot) {
+			eCloud = new me.clip.placeholderapi.commands.spigot.ExpansionCloudCommands(i);
+		} else {
+			eCloud = new me.clip.placeholderapi.commands.bukkit.ExpansionCloudCommands(i);
+		}
 	}
 	
 	@Override
 	public boolean onCommand(CommandSender s, Command c, String label, String[] args) {
 
 		if (args.length == 0) {
-			Msg.msg(s, "PlaceholderAPI &7version &b&o"+plugin.getDescription().getVersion());
-			Msg.msg(s, "&fCreated by&7: &bextended_clip");
+			Msg.msg(s, "PlaceholderAPI &7version &b&o" + plugin.getDescription().getVersion(),
+			"&fCreated by&7: &bextended_clip");
 			return true;
 			
 		} else {
 
 			if (args[0].equalsIgnoreCase("help")) {
-				Msg.msg(s, "PlaceholderAPI &aHelp &e(&f" + plugin.getDescription().getVersion() + "&e)");
-				Msg.msg(s, "&b/papi");
-				Msg.msg(s, "&fView plugin info/version info");
-				Msg.msg(s, "&b/papi list");
-				Msg.msg(s, "&fList all placeholder expansions that are currently active");
-				Msg.msg(s, "&b/papi info <placeholder name>");
-				Msg.msg(s, "&fView information for a specific expansion");
-				Msg.msg(s, "&b/papi parse <...args>");
-				Msg.msg(s, "&fParse a String with placeholders");
-				Msg.msg(s, "&b/papi parserel <player one> <player two> <...args>");
-				Msg.msg(s, "&fParse a String with relational placeholders");
-				Msg.msg(s, "&b/papi reload");
-				Msg.msg(s, "&fReload the config settings");
-				
-				boolean enabled = plugin.getExpansionCloud() != null;
-				
-				
-				if (s.isOp()) {
-					if (!enabled) {
-						Msg.msg(s, "&b/papi enablecloud");
-						Msg.msg(s, "&fEnable the expansion cloud");
+				Msg.msg(s, "PlaceholderAPI &aHelp &e(&f" + plugin.getDescription().getVersion() + "&e)",
+				"&b/papi",
+				"&fView plugin info/version info",
+				"&b/papi list",
+				"&fList all placeholder expansions that are currently active",
+				"&b/papi info <placeholder name>",
+				"&fView information for a specific expansion",
+				"&b/papi parse <...args>",
+				"&fParse a String with placeholders",
+				"&b/papi parserel <player one> <player two> <...args>",
+				"&fParse a String with relational placeholders",
+				"&b/papi reload",
+				"&fReload the config settings");
+
+				if (s.hasPermission("placeholderapi.ecloud")) {
+					if (plugin.getExpansionCloud() == null) {
+						Msg.msg(s, "&b/papi enablecloud",
+						"&fEnable the expansion cloud");
 					} else {
-						Msg.msg(s, "&b/papi disablecloud");
-						Msg.msg(s, "&fDisable the expansion cloud");
-						Msg.msg(s, "&b/papi ecloud");
-						Msg.msg(s, "&fView information about the PlaceholderAPI expansion cloud");
-						Msg.msg(s, "&b/papi ecloud status");
-						Msg.msg(s, "&fView status of the PlaceholderAPI expansion cloud");
-						Msg.msg(s, "&b/papi ecloud list <all/author> <page>");
-						Msg.msg(s, "&fList all available expansions");
-						Msg.msg(s, "&b/papi ecloud info <expansion name>");
-						Msg.msg(s, "&fView information about a specific expansion on the cloud");
-						Msg.msg(s, "&b/papi ecloud download <expansion name>");
-						Msg.msg(s, "&fDownload a specific expansion from the cloud");
+						Msg.msg(s, "&b/papi disablecloud",
+						"&fDisable the expansion cloud",
+						"&b/papi ecloud",
+						"&fView information about the PlaceholderAPI expansion cloud",
+						"&b/papi ecloud status",
+						"&fView status of the PlaceholderAPI expansion cloud",
+						"&b/papi ecloud list <all/author> <page>",
+						"&fList all available expansions",
+						"&b/papi ecloud info <expansion name>",
+						"&fView information about a specific expansion on the cloud",
+						"&b/papi ecloud download <expansion name>",
+						"&fDownload a specific expansion from the cloud");
 					}	
 				}
 				
 				return true;
 				
 			} else if (args[0].equalsIgnoreCase("ecloud")) {
-				if (!s.isOp()) {
+				if (!s.hasPermission("placeholderapi.ecloud")) {
 					Msg.msg(s, "&cYou don't have permission to do that!");
 					return true;
 				}
@@ -109,8 +110,7 @@ public class PlaceholderAPICommands implements CommandExecutor {
 				return eCloud.onCommand(s, c, label, args);
 				
 			} else if (args[0].equalsIgnoreCase("enablecloud")) {
-				
-				if (!s.isOp()) {
+				if (!s.hasPermission("placeholderapi.ecloud")) {
 					Msg.msg(s, "&cYou don't have permission to do that!");
 					return true;
 				}
@@ -127,7 +127,7 @@ public class PlaceholderAPICommands implements CommandExecutor {
 				
 			} else if (args[0].equalsIgnoreCase("disablecloud")) {
 				
-				if (!s.isOp()) {
+				if (!s.hasPermission("placeholderapi.ecloud")) {
 					Msg.msg(s, "&cYou don't have permission to do that!");
 					return true;
 				}
@@ -179,7 +179,7 @@ public class PlaceholderAPICommands implements CommandExecutor {
 				if (ex.getPlugin() != null) {
 					Msg.msg(s, "&7Requires plugin: &f" + ex.getPlugin());
 				}
-				
+
 				if (ex.getPlaceholders() != null) {
 					Msg.msg(s, "&8&m-- &r&7Placeholders &8&m--");
 					for (String placeholder : ex.getPlaceholders()) {
@@ -271,7 +271,7 @@ public class PlaceholderAPICommands implements CommandExecutor {
 				Msg.msg(s, "&cIncorrect usage! &7/papi help");
 			}
 		}
-		
+
 		return true;
 	}
 

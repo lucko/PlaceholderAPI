@@ -20,21 +20,20 @@
  */
 package me.clip.placeholderapi.expansion;
 
+import me.clip.placeholderapi.PlaceholderAPI;
+import me.clip.placeholderapi.PlaceholderAPIPlugin;
+import me.clip.placeholderapi.PlaceholderHook;
+import me.clip.placeholderapi.expansion.cloud.CloudExpansion;
+import me.clip.placeholderapi.util.FileUtil;
+import org.bukkit.Bukkit;
+import org.bukkit.configuration.file.FileConfiguration;
+import org.bukkit.event.Listener;
+
 import java.lang.reflect.Constructor;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
-
-import me.clip.placeholderapi.PlaceholderAPI;
-import me.clip.placeholderapi.PlaceholderAPIPlugin;
-import org.bukkit.Bukkit;
-import org.bukkit.configuration.file.FileConfiguration;
-import org.bukkit.event.Listener;
-
-import me.clip.placeholderapi.PlaceholderHook;
-import me.clip.placeholderapi.expansion.cloud.CloudExpansion;
-import me.clip.placeholderapi.util.FileUtil;
 
 public final class ExpansionManager {
 
@@ -78,37 +77,32 @@ public final class ExpansionManager {
 		if (c instanceof Configurable) {
 
 			Map<String, Object> defaults = ((Configurable) c).getDefaults();
-
 			String pre = "expansions." + c.getIdentifier() + ".";
+			FileConfiguration cfg = plugin.getConfig();
 
-			if (defaults != null && !defaults.isEmpty()) {
+			boolean save = false;
 
-				FileConfiguration cfg = plugin.getConfig();
-
-				boolean save = false;
-
-				for (Entry<String, Object> entries : defaults.entrySet()) {
-					if (entries.getKey() == null || entries.getKey().isEmpty()) {
-						continue;
-					}
-
-					if (entries.getValue() == null) {
-						if (cfg.contains(pre + entries.getKey())) {
-							save = true;
-							cfg.set(pre + entries.getKey(), null);
-						}
-					} else {
-						if (!cfg.contains(pre + entries.getKey())) {
-							save = true;
-							cfg.set(pre + entries.getKey(), entries.getValue());
-						}
-					}
+			for (Entry<String, Object> entries : defaults.entrySet()) {
+				if (entries.getKey() == null || entries.getKey().isEmpty()) {
+					continue;
 				}
 
-				if (save) {
-					plugin.saveConfig();
-					plugin.reloadConfig();
+				if (entries.getValue() == null) {
+					if (cfg.contains(pre + entries.getKey())) {
+						save = true;
+						cfg.set(pre + entries.getKey(), null);
+					}
+				} else {
+					if (!cfg.contains(pre + entries.getKey())) {
+						save = true;
+						cfg.set(pre + entries.getKey(), entries.getValue());
+					}
 				}
+			}
+
+			if (save) {
+				plugin.saveConfig();
+				plugin.reloadConfig();
 			}
 		}
 
@@ -138,16 +132,13 @@ public final class ExpansionManager {
 		if (c instanceof Listener) {
 			Listener l = (Listener) c;
 			Bukkit.getPluginManager().registerEvents(l, plugin);
-			plugin.getLogger().info("Registered event listener for expansion: " + c.getIdentifier());
 		}
 
 		plugin.getLogger().info("Successfully registered expansion: " + c.getIdentifier());
 
 		if (c instanceof Taskable) {
 			((Taskable) c).start();
-			plugin.getLogger().info("Started scheduled task for expansion: " + c.getIdentifier());
 		}
-
 		return true;
 	}
 
